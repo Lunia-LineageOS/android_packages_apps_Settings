@@ -41,6 +41,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.SearchIndexableResource;
@@ -92,11 +93,16 @@ public class TetherSettings extends RestrictedDashboardFragment
     static final String KEY_ENABLE_BLUETOOTH_TETHERING = "enable_bluetooth_tethering";
     private static final String KEY_ENABLE_ETHERNET_TETHERING = "enable_ethernet_tethering";
     private static final String KEY_DATA_SAVER_FOOTER = "disabled_on_data_saver";
+    private static final String KEY_TETHERING_ALLOW_VPN_UPSTREAMS =
+            "tethering_allow_vpn_upstreams";
     @VisibleForTesting
     static final String KEY_TETHER_PREFS_TOP_INTRO = "tether_prefs_top_intro";
 
     private static final String TAG = "TetheringSettings";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+    // VPN upstreams need a Tethering module built from source.
+    private static final boolean CONNECTIVITY_EXTENSIONS_SUPPORTED =
+            SystemProperties.getBoolean("ro.config.connectivity_extensions", true);
 
     @VisibleForTesting
     RestrictedSwitchPreference mUsbTether;
@@ -228,6 +234,7 @@ public class TetherSettings extends RestrictedDashboardFragment
             }
         }
         if (!ethernetAvailable) getPreferenceScreen().removePreference(mEthernetTether);
+        if (!CONNECTIVITY_EXTENSIONS_SUPPORTED) removePreference(KEY_TETHERING_ALLOW_VPN_UPSTREAMS);
         // Set initial state based on Data Saver mode.
         onDataSaverChanged(mDataSaverBackend.isDataSaverEnabled());
     }
@@ -694,6 +701,10 @@ public class TetherSettings extends RestrictedDashboardFragment
                     final boolean ethernetAvailable = (em != null);
                     if (!ethernetAvailable) {
                         keys.add(KEY_ENABLE_ETHERNET_TETHERING);
+                    }
+
+                    if (!CONNECTIVITY_EXTENSIONS_SUPPORTED) {
+                        keys.add(KEY_TETHERING_ALLOW_VPN_UPSTREAMS);
                     }
                     return keys;
                 }
