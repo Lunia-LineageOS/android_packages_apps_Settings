@@ -34,6 +34,7 @@ import android.graphics.drawable.Drawable;
 import android.net.NetworkPolicyManager;
 import android.net.NetworkTemplate;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.ArraySet;
 import android.util.IconDrawableFactory;
@@ -85,6 +86,10 @@ public class AppDataUsage extends DataUsageBaseFragment implements OnPreferenceC
     private static final String KEY_RESTRICT_VPN = "restrict_vpn";
     private static final String KEY_RESTRICT_WIFI = "restrict_wifi";
     private static final String KEY_UNRESTRICTED_DATA = "unrestricted_data_saver";
+
+    // Network access and per-transport toggles need a Connectivity module built from source.
+    private static final boolean CONNECTIVITY_EXTENSIONS_SUPPORTED =
+            SystemProperties.getBoolean("ro.config.connectivity_extensions", true);
 
     private PackageManager mPackageManager;
     private final ArraySet<String> mPackages = new ArraySet<>();
@@ -176,16 +181,23 @@ public class AppDataUsage extends DataUsageBaseFragment implements OnPreferenceC
                     }
                     use(AppDataUsageAppSettingsController.class).init(mPackages, userId);
                 }
-                mRestrictAll = findPreference(KEY_RESTRICT_ALL);
-                mRestrictAll.setOnPreferenceChangeListener(this);
                 mRestrictBackground = findPreference(KEY_RESTRICT_BACKGROUND);
                 mRestrictBackground.setOnPreferenceChangeListener(this);
-                mRestrictCellular = findPreference(KEY_RESTRICT_CELLULAR);
-                mRestrictCellular.setOnPreferenceChangeListener(this);
-                mRestrictVpn = findPreference(KEY_RESTRICT_VPN);
-                mRestrictVpn.setOnPreferenceChangeListener(this);
-                mRestrictWifi = findPreference(KEY_RESTRICT_WIFI);
-                mRestrictWifi.setOnPreferenceChangeListener(this);
+                if (CONNECTIVITY_EXTENSIONS_SUPPORTED) {
+                    mRestrictAll = findPreference(KEY_RESTRICT_ALL);
+                    mRestrictAll.setOnPreferenceChangeListener(this);
+                    mRestrictCellular = findPreference(KEY_RESTRICT_CELLULAR);
+                    mRestrictCellular.setOnPreferenceChangeListener(this);
+                    mRestrictVpn = findPreference(KEY_RESTRICT_VPN);
+                    mRestrictVpn.setOnPreferenceChangeListener(this);
+                    mRestrictWifi = findPreference(KEY_RESTRICT_WIFI);
+                    mRestrictWifi.setOnPreferenceChangeListener(this);
+                } else {
+                    removePreference(KEY_RESTRICT_ALL);
+                    removePreference(KEY_RESTRICT_CELLULAR);
+                    removePreference(KEY_RESTRICT_VPN);
+                    removePreference(KEY_RESTRICT_WIFI);
+                }
                 mUnrestrictedData = findPreference(KEY_UNRESTRICTED_DATA);
                 mUnrestrictedData.setOnPreferenceChangeListener(this);
             }
@@ -377,19 +389,19 @@ public class AppDataUsage extends DataUsageBaseFragment implements OnPreferenceC
     }
 
     private boolean getAppRestrictCellular() {
-        return getAppRestriction(POLICY_REJECT_CELLULAR);
+        return CONNECTIVITY_EXTENSIONS_SUPPORTED && getAppRestriction(POLICY_REJECT_CELLULAR);
     }
 
     private boolean getAppRestrictVpn() {
-        return getAppRestriction(POLICY_REJECT_VPN);
+        return CONNECTIVITY_EXTENSIONS_SUPPORTED && getAppRestriction(POLICY_REJECT_VPN);
     }
 
     private boolean getAppRestrictWifi() {
-        return getAppRestriction(POLICY_REJECT_WIFI);
+        return CONNECTIVITY_EXTENSIONS_SUPPORTED && getAppRestriction(POLICY_REJECT_WIFI);
     }
 
     private boolean getAppRestrictAll() {
-        return getAppRestriction(POLICY_REJECT_ALL);
+        return CONNECTIVITY_EXTENSIONS_SUPPORTED && getAppRestriction(POLICY_REJECT_ALL);
     }
 
     private boolean getUnrestrictData() {
