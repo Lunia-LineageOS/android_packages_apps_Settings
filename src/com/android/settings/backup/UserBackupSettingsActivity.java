@@ -28,6 +28,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.android.settings.R;
 import com.android.settings.SettingsActivity;
+import com.android.settings.backup.transport.TransportHelper;
 import com.android.settings.search.BaseSearchIndexProvider;
 import com.android.settings.utils.InsetUtils;
 import com.android.settingslib.search.Indexable;
@@ -61,9 +62,11 @@ public class UserBackupSettingsActivity extends SettingsActivity implements Inde
 
         BackupSettingsHelper backupHelper = new BackupSettingsHelper(this);
 
-        if (!backupHelper.isBackupProvidedByManufacturer()) {
-            // If manufacturer specific backup settings are not provided then launch
-            // the backup settings provided by backup transport or the default one directly.
+        if (!backupHelper.isBackupProvidedByManufacturer()
+                || !new TransportHelper(this).hasMultipleTransports()) {
+            // If manufacturer specific backup settings are not provided, or there is no other
+            // transport to switch to, then launch the backup settings provided by backup
+            // transport or the default one directly.
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG,
                         "No manufacturer settings found, launching the backup settings directly");

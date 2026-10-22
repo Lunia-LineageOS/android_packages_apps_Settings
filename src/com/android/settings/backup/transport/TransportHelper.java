@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Helper class for {@link TransportActivity} that interacts with {@link IBackupManager}.
  */
-class TransportHelper {
+public class TransportHelper {
     private static final String TAG = "TransportHelper";
 
     private final IBackupManager mBackupManager = IBackupManager.Stub.asInterface(
@@ -42,7 +42,7 @@ class TransportHelper {
 
     private Context mContext;
 
-    TransportHelper(Context context) {
+    public TransportHelper(Context context) {
         mContext = context;
     }
 
@@ -64,6 +64,10 @@ class TransportHelper {
             transports.add(transport);
         }
         return transports;
+    }
+
+    public boolean hasMultipleTransports() {
+        return getTransports().size() > 1;
     }
 
     void selectTransport(String name) {
